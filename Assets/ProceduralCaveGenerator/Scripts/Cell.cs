@@ -1,5 +1,13 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿/*
+ * ==================================================================
+ *  Cell.cs
+ *  CaveGenerator
+ *
+ *  Created by Parag Padubidri
+ *  Copyright (c) 2016, Parag Padubidri. All rights reserved.
+ * ==================================================================
+ */
+
 
 public class Cell
 {
