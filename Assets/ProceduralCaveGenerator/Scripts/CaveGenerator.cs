@@ -11,7 +11,7 @@ public static class CaveGenerator
     public static GameObject cave;
     static int[,] caveMap;
 
-    public static void CreateCaveMap(int width, int height, int wallFillPercent, int seed)
+    public static void CreateCaveMap(int width, int height, int wallFillPercent, int threshold,int seed)
     {
         Debug.Log("Creating...");
         caveMap = new int[width, height];
@@ -42,11 +42,11 @@ public static class CaveGenerator
         {
             AjustWalls(caveMap);
         }
-
+        FillMap(width, height, threshold);
         DrawCaveMap(caveMap);
     }
 
-    private static void AjustWalls(int[,] caveMap)
+    static void AjustWalls(int[,] caveMap)
     {
         int width = caveMap.GetLength(0);
         int height = caveMap.GetLength(1);
@@ -70,20 +70,20 @@ public static class CaveGenerator
         }
     }
 
-    static int GetSurroundingWalls(int x, int y, int width, int height)
+    static int GetSurroundingWalls(int cellX, int cellY, int width, int height)
     {
         int surroundWalls = 0;
-        for (int i = x - 1; i <= x + 1; i++)
+        for (int x = cellX - 1; x <= cellX + 1; x++)
         {
-            for (int j = y - 1; j <= y + 1; j++)
+            for (int y = cellY - 1; y <= cellY + 1; y++)
             {
                 //Check bounds
-                if (i >= 0 && i < width && j >= 0 && j < height)
+                if (x >= 0 && x < width && y >= 0 && y < height)
                 {
                     //Filter self
-                    if (i != x || j != y)
+                    if (x != cellX || y != cellY)
                     {
-                        surroundWalls += caveMap[x, y];
+                        surroundWalls += caveMap[cellX, cellY];
                     }
                 }
                 else
@@ -96,12 +96,136 @@ public static class CaveGenerator
         return surroundWalls;
     }
 
-    static List<Cell> FloodFill()
+    //Cell Culling
+    static void  FillMap(int width, int height, int threshold)
     {
-        return null;
+        int emptyCellThreshold = threshold;
+
+        //Get first random empty cell
+        int[] startXY = isEmptyCell(width, height);
+        int startX = startXY[0];
+        int startY = startXY[1];
+
+        List<Cell> cells = FloodFill(startX, startY, width, height);
+
+        int iterations = 0;
+
+        while (cells.Count < emptyCellThreshold)
+        {
+            iterations++;
+
+            startXY = isEmptyCell(width, height);
+            startX = startXY[0];
+            startY = startXY[1];
+
+            cells = FloodFill(startX, startY, width, height);
+
+
+            //Break if failed to get desired cave after trying too many times
+            if (iterations > 1000)
+            {
+                Debug.Log("Falied to get desired cave. Try changing parameters & try again.");
+                break;
+            }
+        }
+
+        Debug.Log("Empty cell count : " + cells.Count + " iterations:  " + iterations);
+
+        //Convert everything outside threshold region to walls
+        foreach (Cell cell in cells)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+
+                    if ((x != cell.cellX && y != cell.cellY))
+                    {                        
+                        caveMap[x, y] = 1;
+                    }
+                }
+            }
+        }
+
+        foreach (Cell cell in cells)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    if ((x == cell.cellX && y == cell.cellY))
+                    {
+                        caveMap[x, y] = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    //Check empty cell
+    static int[] isEmptyCell(int width, int height)
+    {
+        bool isEmpty = false;
+        int randX;
+        int randY;
+        int[] emptyXY = new int[2];
+
+        while (!isEmpty)
+        {
+            System.Random rand =  new System.Random();
+                        
+            randX = rand.Next(1, width);
+            randY = rand.Next(1, height);
+
+            if (caveMap[randX, randY] == 0)
+            {
+                emptyXY[0] = randX;
+                emptyXY[1] = randY;
+                isEmpty = true;
+            }
+        }
+
+        return emptyXY;
+    }
+
+    //FloodFill Algorithm
+    static List<Cell> FloodFill(int startX, int startY, int width, int height)
+    {
+        List<Cell> cells = new List<Cell>();
+        int[,] visitMap = new int[width, height];
+        int startCell = caveMap[startX, startY];
+
+        Queue<Cell> cellQueue = new Queue<Cell>();
+        cellQueue.Enqueue(new Cell(startX, startY));
+
+        visitMap[startX, startY] = 1;
+
+        while(cellQueue.Count > 0)
+        {
+            Cell cell = cellQueue.Dequeue();
+            cells.Add(cell);
+
+            for (int x = cell.cellX - 1; x <= cell.cellX; x++)
+            {
+                for (int y = cell.cellY - 1; y <= cell.cellY; y++)
+                {
+                    //Filter in range & diagonal cells
+                    if ((x >= 0 && x < width && y >= 0 && y < height) && (x == cell.cellX || y == cell.cellY))
+                    {
+                        if (visitMap[x,y] == 0 && caveMap[x,y] == startCell)
+                        {
+                            visitMap[x, y] = 1;
+                            cellQueue.Enqueue(new Cell(x, y));
+                        }
+                    }
+                }
+            }
+        }
+
+        return cells;
     } 
 
-    private static void DrawCaveMap(int[,] caveMap)
+    static void DrawCaveMap(int[,] caveMap)
     {
         int width = caveMap.GetLength(0);
         int height = caveMap.GetLength(1);

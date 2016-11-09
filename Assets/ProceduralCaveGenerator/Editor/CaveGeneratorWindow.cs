@@ -11,6 +11,7 @@ public class CaveGeneratorWindow : EditorWindow
     public int width;
     public int height;
     public int seed;
+    public int threshhold;
 
     public int fillProbability;
 
@@ -27,6 +28,7 @@ public class CaveGeneratorWindow : EditorWindow
         width = EditorGUILayout.IntField("CaveMap Width  : ", width);
         height = EditorGUILayout.IntField("CaveMap Height : ", height);
         fillProbability = EditorGUILayout.IntSlider("Wall Percent : ", fillProbability, 1, 100, GUILayout.MinWidth(100));
+        threshhold = EditorGUILayout.IntSlider("Threshold : ", threshhold, 1, (width*height)/3, GUILayout.MinWidth(100));
         seed = EditorGUILayout.IntField("Seed : ", seed);
 
         //Generate Cave
@@ -38,7 +40,7 @@ public class CaveGeneratorWindow : EditorWindow
                 DestroyImmediate(CaveGenerator.cave);
             }
 
-            CaveGenerator.CreateCaveMap(width, height, fillProbability, seed);
+            CaveGenerator.CreateCaveMap(width, height, fillProbability, threshhold,seed);
         }
 
         //Save Cave as Prefab
