@@ -240,6 +240,8 @@ public static class CaveGenerator
         Material groundMat = Resources.Load("Ground_MAT") as Material;
         ground.GetComponent<Renderer>().material = groundMat;
 
+        Material wallMat = Resources.Load("Wall_MAT") as Material;       
+
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -250,6 +252,7 @@ public static class CaveGenerator
                     wall.name = "Wall";
                     wall.transform.position = new Vector3((float)(-(float)width / 2 + x) + 0.5f, 0.5f, (float)(-(float)height / 2 + y) + 0.5f);
                     wall.transform.parent = cave.transform;
+                    wall.GetComponent<Renderer>().material = wallMat;
                 }
             }
         }

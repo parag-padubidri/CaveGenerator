@@ -63,6 +63,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\FPSController\Scripts\CharacterController.cs" />
+    <Compile Include="Assets\FPSController\Scripts\MouseLook.cs" />
     <Compile Include="Assets\ProceduralCaveGenerator\Scripts\CaveGenerator.cs" />
     <Compile Include="Assets\ProceduralCaveGenerator\Scripts\Cell.cs" />
   </ItemGroup>
