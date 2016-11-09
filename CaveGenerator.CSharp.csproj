@@ -63,9 +63,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\FPSController\Scripts\MiniMap.cs" />
-    <Compile Include="Assets\FPSController\Scripts\MouseLook.cs" />
-    <Compile Include="Assets\FPSController\Scripts\SimpleCharacterController.cs" />
+    <Compile Include="Assets\ProceduralCaveGenerator\FPSController\Scripts\MiniMap.cs" />
+    <Compile Include="Assets\ProceduralCaveGenerator\FPSController\Scripts\MouseLook.cs" />
+    <Compile Include="Assets\ProceduralCaveGenerator\FPSController\Scripts\SimpleCharacterController.cs" />
     <Compile Include="Assets\ProceduralCaveGenerator\Scripts\CaveGenerator.cs" />
     <Compile Include="Assets\ProceduralCaveGenerator\Scripts\Cell.cs" />
   </ItemGroup>
