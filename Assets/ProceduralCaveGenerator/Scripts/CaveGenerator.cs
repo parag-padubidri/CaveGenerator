@@ -66,7 +66,7 @@ public static class CaveGenerator
         //Fill Empty cell Islands with walls 
         FillMap();
 
-        //Remove as many single Single walls as possible
+        //Remove as many single Single cells as possible
         SmoothWalls(smoothValue, true);
 
         //Draw 3D Primitives for walls
@@ -83,7 +83,7 @@ public static class CaveGenerator
     {
         for (int i = 0; i < loopCount; i++)
         {
-            AjustWalls(caveMap, false);
+            AjustWalls(false);
         }
     }
 
@@ -91,10 +91,13 @@ public static class CaveGenerator
     /// <summary>
     /// Function to Adjust walls
     /// </summary>
-    /// <param name="caveMap">Provide 2D Cave Map grid</param>
     /// <param name="doCleanse">Try to reduce single cells?</param>
-    static void AjustWalls(int[,] caveMap, bool doCleanse)
+    static void AjustWalls(bool doCleanse)
     {
+        //Tweakable values
+        int wallUpperThreshold = 5; 
+        int wallLowerThreshold = 5;
+
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -104,11 +107,11 @@ public static class CaveGenerator
 
                 if (!doCleanse)
                 {
-                    if (wallCount > 5)
+                    if (wallCount > wallUpperThreshold)
                     {
                         caveMap[x, y] = 1;
                     }
-                    else if (wallCount < 5)
+                    else if (wallCount < wallLowerThreshold)
                     {
                         caveMap[x, y] = 0;
                     } 
@@ -219,7 +222,7 @@ public static class CaveGenerator
             {
                 for (int y = 0; y < height; y++)
                 {
-                    if ((x == cell.cellX && y == cell.cellY))
+                    if (x == cell.cellX && y == cell.cellY)
                     {
                         caveMap[x, y] = 0;
                     }
@@ -229,7 +232,7 @@ public static class CaveGenerator
     }
 
     /// <summary>
-    /// Function to Check empty cell with or without seed
+    /// Function to return empty cell with or without seed
     /// </summary>
     static int[] isEmptyCell()
     {
@@ -237,30 +240,16 @@ public static class CaveGenerator
         int randX;
         int randY;
         int[] emptyXY = new int[2];
-        
-        bool isUsingSeed = false;
-
-        if (seed != 0)
-        {
-            isUsingSeed = true;
-        }
 
         while (!isEmpty)
         {
             System.Random rand;
-            if (isUsingSeed)
-            {
-                rand = new System.Random(seed);
-            }
-            else
-            {
-                rand = new System.Random();
-            }            
+            rand = (seed != 0) ? new System.Random(seed) : new System.Random();           
                         
             randX = rand.Next(1, width);
             randY = rand.Next(1, height);
 
-            if (caveMap[randX, randY] == 0 || isUsingSeed)
+            if (caveMap[randX, randY] == 0 || seed != 0)
             {
                 emptyXY[0] = randX;
                 emptyXY[1] = randY;
@@ -324,6 +313,8 @@ public static class CaveGenerator
         cave = new GameObject();
         cave.name = "Cave";
 
+        float wallOffset = 0.5f;
+
         //Setup cave ground and its material
         GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
         ground.name = "Ground";
@@ -344,7 +335,7 @@ public static class CaveGenerator
                     //Generate and setup walls from cube primitives
                     GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     wall.name = "Wall";
-                    wall.transform.position = new Vector3((float)(-(float)width / 2 + x) + 0.5f, 0.5f, (float)(-(float)height / 2 + y) + 0.5f);
+                    wall.transform.position = new Vector3((float)(-(float)width / 2 + x) + wallOffset, wallOffset, (float)(-(float)height / 2 + y) + wallOffset); // offset wall position to start from ground and grid center
                     wall.transform.parent = cave.transform;
                     wall.GetComponent<Renderer>().material = wallMat;
                 }
@@ -358,6 +349,9 @@ public static class CaveGenerator
     public static void CleanCaveMap()
     {
         List<GameObject> walls = new List<GameObject>();
+
+        float overlapBoxSize = 0.7f;
+        int overlapCount = 3;
 
         int childCount = cave.transform.childCount;
         int singleWallsCount = 0;
@@ -374,10 +368,10 @@ public static class CaveGenerator
         //Detect collision with other walls if any
         for (int i = 0; i < walls.Count; i++)
         {
-            Collider[] cols = Physics.OverlapBox(walls[i].transform.position, new Vector3(0.7f,0.7f,0.7f));
+            Collider[] cols = Physics.OverlapBox(walls[i].transform.position, new Vector3(overlapBoxSize, overlapBoxSize, overlapBoxSize));
 
             //Destroy single wall  
-            if (cols.Length < 3)
+            if (cols.Length < overlapCount)
             {
                 singleWallsCount++; 
                 UnityEngine.GameObject.DestroyImmediate(walls[i]);
