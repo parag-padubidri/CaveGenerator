@@ -49,6 +49,7 @@ public class CaveGeneratorWindow : EditorWindow
         //Button to Generate Cave
         if (GUILayout.Button("Generate Cave"))
         {
+            //Destroy previous cave if it exists
             if (CaveGenerator.cave != null)
             {
                 DestroyImmediate(CaveGenerator.cave);
@@ -65,7 +66,16 @@ public class CaveGeneratorWindow : EditorWindow
         {
             string prefabPath = "Assets/ProceduralCaveGenerator/Prefabs/";
             Object prefab = PrefabUtility.CreateEmptyPrefab(prefabPath + CaveGenerator.cave.name + System.DateTime.Now.ToString("_MMddyyhhmmss") + ".prefab");
-            PrefabUtility.ReplacePrefab(CaveGenerator.cave, prefab, ReplacePrefabOptions.ConnectToPrefab);
+
+            //Null check for new cave
+            if (CaveGenerator.cave != null)
+            {
+                PrefabUtility.ReplacePrefab(CaveGenerator.cave, prefab, ReplacePrefabOptions.ConnectToPrefab);
+            }
+            else
+            {
+                Debug.LogError("Cannot find a newly generated cave. Please generate a new cave to save as prefab."); //Just for safety - control should not be able to come here
+            }         
 
             //Log output path
             Debug.Log("Saved to " + prefabPath);
@@ -74,7 +84,16 @@ public class CaveGeneratorWindow : EditorWindow
         //Button to optionally remove single walls if any
         if (GUILayout.Button("Remove Single Walls"))
         {
-            CaveGenerator.CleanCaveMap();
+            //Null check for new cave
+            if (CaveGenerator.cave != null)
+            {
+                CaveGenerator.CleanCaveMap();
+            }
+            else
+            {
+                Debug.LogError("Cannot find a newly generated cave. Please generate a new cave to check for single walls.");  //Just for safety - control should not be able to come here
+            }
+            
         }
 
         EditorGUI.EndDisabledGroup();

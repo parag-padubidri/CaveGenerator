@@ -22,16 +22,7 @@ public static class CaveGenerator
         caveMap = new int[width, height];
 
         //Generate random with or without seed 
-        System.Random prng;
-
-        if (seed != 0)
-        {
-            prng = new System.Random(seed);
-        }
-        else
-        {
-            prng = new System.Random();
-        }      
+        System.Random prng = (seed != 0) ? new System.Random(seed) : new System.Random();   
 
         for (int x = 0; x < width; x++)
         {
