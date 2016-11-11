@@ -25,6 +25,9 @@ public class CaveGeneratorWindow : EditorWindow
 
     public int fillProbability;
 
+    /// <summary>
+    /// Function to Initialize Cave Editor Window
+    /// </summary>
     public static void InitCaveEditorWindow()
     {
         //Setup Custom Editor Window
@@ -87,7 +90,7 @@ public class CaveGeneratorWindow : EditorWindow
             //Null check for new cave
             if (CaveGenerator.cave != null)
             {
-                CaveGenerator.CleanCaveMap();
+                CaveGenerator.CleanCaveMap();   
             }
             else
             {
