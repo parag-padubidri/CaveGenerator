@@ -16,19 +16,29 @@ public static class CaveGenerator
 {
     public static GameObject cave;
     static int[,] caveMap;
+    static int width;
+    static int height;
+    static int threshold;
+    static int seed;
 
     /// <summary>
     /// Generates a cave with the given parameters 
     /// </summary>
-    /// <param name="width">Width of the cave</param>
-    /// <param name="height">Height of the cave</param>
+    /// <param name="caveWidth">Width of the cave</param>
+    /// <param name="caveHeight">Height of the cave</param>
     /// <param name="wallFillPercent">Threshold Percentage of cave to be filled with walls</param>
-    /// <param name="threshold">Threshold value required for expected empty cells</param>
-    /// <param name="seed">Set to 0 for random caves or any other integer value for cave regeneration given same width and height</param>
-    public static void CreateCaveMap(int width, int height, int wallFillPercent, int threshold,int seed)
+    /// <param name="roomthreshold">Threshold value required for expected empty cells</param>
+    /// <param name="caveSeed">Set to 0 for random caves or any other integer value for cave regeneration given same width and height</param>
+    public static void CreateCaveMap(int caveWidth, int caveHeight, int wallFillPercent, int roomthreshold,int caveSeed)
     {
+        //Initialize required values
+        width = caveWidth;
+        height = caveHeight;
         caveMap = new int[width, height];
-        int smoothValue = 7;
+        threshold = roomthreshold;
+        seed = caveSeed;
+
+        int smoothValue = 7; //Iterations to run on generated cave for surrounding wall checks
 
         //Generate random with or without seed 
         System.Random prng = (seed != 0) ? new System.Random(seed) : new System.Random();   
@@ -54,13 +64,13 @@ public static class CaveGenerator
         SmoothWalls(smoothValue, false);
 
         //Fill Empty cell Islands with walls 
-        FillMap(width, height, threshold, seed);
+        FillMap();
 
         //Remove as many single Single walls as possible
         SmoothWalls(smoothValue, true);
 
         //Draw 3D Primitives for walls
-        DrawCaveMap(caveMap);                
+        DrawCaveMap();                
     }
 
 
@@ -85,15 +95,12 @@ public static class CaveGenerator
     /// <param name="doCleanse">Try to reduce single cells?</param>
     static void AjustWalls(int[,] caveMap, bool doCleanse)
     {
-        int width = caveMap.GetLength(0);
-        int height = caveMap.GetLength(1);
-
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
                 //Get Surrounding Walls Count 
-                int wallCount = GetSurroundingWalls(x, y, width, height);
+                int wallCount = GetSurroundingWalls(x, y);
 
                 if (!doCleanse)
                 {
@@ -123,10 +130,7 @@ public static class CaveGenerator
     /// </summary>
     /// <param name="cellX">Row number of cell</param>
     /// <param name="cellY">Column number of cell</param>
-    /// <param name="width">Cave Map width</param>
-    /// <param name="height">Cave Map height</param>
-    /// <returns></returns>
-    static int GetSurroundingWalls(int cellX, int cellY, int width, int height)
+    static int GetSurroundingWalls(int cellX, int cellY)
     {
         int surroundWalls = 0;
         for (int x = cellX - 1; x <= cellX + 1; x++)
@@ -155,38 +159,34 @@ public static class CaveGenerator
     /// <summary>
     /// Function to Get biggest connected region based on threshold and fill the rest with walls
     /// </summary>
-    /// <param name="width">Cave Map width</param>
-    /// <param name="height">Cave Map height</param>
-    /// <param name="threshold">Threshold value for empty cells</param>
-    /// <param name="emptySeed">Seed value for cave generation</param>
-    static void  FillMap(int width, int height, int threshold, int emptySeed)
+    static void  FillMap()
     {
-        int emptyCellThreshold = threshold;
+        int loopFailSafeCount = 1000; // Number of tries before giving up to get desired cave
 
         //Get first random empty cell
-        int[] startXY = isEmptyCell(width, height, emptySeed);
+        int[] startXY = isEmptyCell();
         int startX = startXY[0];
         int startY = startXY[1];
 
         //Run FloodFill function with random cell indices for given seed
-        List<Cell> cells = FloodFill(startX, startY, width, height);
+        List<Cell> cells = FloodFill(startX, startY);
 
-        int iterations = 1;
+        int iterations = 1; //Set FailSafe loop count to 1
 
-        while (cells.Count < emptyCellThreshold && emptySeed == 0)
+        while (cells.Count < threshold && seed == 0)
         {
             iterations++;
 
-            startXY = isEmptyCell(width, height, 0);
+            startXY = isEmptyCell();
             startX = startXY[0];
             startY = startXY[1];
 
             //Run FloodFill function with random empty cell indices without seed
-            cells = FloodFill(startX, startY, width, height);
+            cells = FloodFill(startX, startY);
 
 
             //Break if failed to get desired cave after trying too many times
-            if (iterations > 1000)
+            if (iterations > loopFailSafeCount)
             {
                 //Log warning
                 Debug.LogWarning("Falied to get desired cave. Try changing parameters and generate cave again.");
@@ -231,10 +231,7 @@ public static class CaveGenerator
     /// <summary>
     /// Function to Check empty cell with or without seed
     /// </summary>
-    /// <param name="width">Cave Map width</param>
-    /// <param name="height">Cave Map height</param>
-    /// <param name="emptySeed">Seed value for cave generation</param>
-    static int[] isEmptyCell(int width, int height, int emptySeed)
+    static int[] isEmptyCell()
     {
         bool isEmpty = false;
         int randX;
@@ -243,7 +240,7 @@ public static class CaveGenerator
         
         bool isUsingSeed = false;
 
-        if (emptySeed != 0)
+        if (seed != 0)
         {
             isUsingSeed = true;
         }
@@ -253,7 +250,7 @@ public static class CaveGenerator
             System.Random rand;
             if (isUsingSeed)
             {
-                rand = new System.Random(emptySeed);
+                rand = new System.Random(seed);
             }
             else
             {
@@ -277,10 +274,8 @@ public static class CaveGenerator
     /// Function for FloodFill Algorithm
     /// </summary>
     /// <param name="startX">Row Number of Start cell value</param>
-    /// <param name="startY">Column Number of Start cell value</param>
-    /// <param name="width">Cave Map width</param>
-    /// <param name="height">Cave Map height</param>    
-    static List<Cell> FloodFill(int startX, int startY, int width, int height)
+    /// <param name="startY">Column Number of Start cell value</param>  
+    static List<Cell> FloodFill(int startX, int startY)
     {
         //Setup Cell List & 2D array for tracking cell visits with passed random cell indices
         List<Cell> cells = new List<Cell>();
@@ -324,12 +319,8 @@ public static class CaveGenerator
     /// <summary>
     /// Function to generate 3D cave using CaveMap grid
     /// </summary>
-    /// <param name="caveMap">Provide Cave Map 2D array</param>
-    static void DrawCaveMap(int[,] caveMap)
-    {
-        int width = caveMap.GetLength(0);
-        int height = caveMap.GetLength(1);
-                
+    static void DrawCaveMap()
+    {                
         cave = new GameObject();
         cave.name = "Cave";
 
@@ -361,7 +352,9 @@ public static class CaveGenerator
         }
     }
 
-    ///<summary> Function to remove single walls in generated CaveMap </summary>
+    /// <summary>
+    /// Function to remove single walls in generated CaveMap 
+    /// </summary>
     public static void CleanCaveMap()
     {
         List<GameObject> walls = new List<GameObject>();
